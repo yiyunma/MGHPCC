@@ -7,6 +7,7 @@ is written to 'feedData.log' inside of the 'data' directory.
 """
 
 import urllib2, os, time, logging, ConfigParser
+import fcntl, sys
 
 
 import ssl
@@ -51,7 +52,18 @@ def writeFeed(url, feedname):
 	path = os.getcwd()+'/data/'+feedname+'/'+currentDay
 	if not os.path.exists(path):
   		os.makedirs(path)
-	open(path+'/'+lastUpdated+".xml",'w').write(data)
+    # modification started
+    fh = open(path+'/'+"temp.xml",'w')
+    try:
+        fcntl.flock(fh, fcntl.LOCK_EX|fcntl.LOCK_NB)
+    except IOError:
+        warning.warn("The acquired lock is blocked")
+        fcntl.flock(fh, fcntl.LOCK_EX)
+    fh.write(data)
+    # previous line:
+	# open(path+'/'+lastUpdated+".xml",'w').write(data)
+    # do we need to add this line?
+    fh.close()    
 
 	writeTime = (time.time()-start-resTime) 
 
