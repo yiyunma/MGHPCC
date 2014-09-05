@@ -13,68 +13,66 @@ import fcntl, sys
 import ssl
 from functools import wraps
 def sslwrap(func):
-	"""
-	Work around for MassDOT server not accepting newer versions 
-	of TLS - specifies v1. Necessary for massPort data feeds.
-	"""
+    """
+    Work around for MassDOT server not accepting newer versions 
+    of TLS - specifies v1. Necessary for massPort data feeds.
+    """
 
-	@wraps(func)
-	def bar(*args, **kw):
-			kw['ssl_version'] = ssl.PROTOCOL_TLSv1
-			return func(*args, **kw)
-	return bar
+    @wraps(func)
+    def bar(*args, **kw):
+            kw['ssl_version'] = ssl.PROTOCOL_TLSv1
+            return func(*args, **kw)
+    return bar
 
 ssl.wrap_socket = sslwrap(ssl.wrap_socket)
 
 
 def writeFeed(url, feedname):
-	"""
-	Pulls a specified data feed, 'url', from MassDOT's website
-	and writes the contents to a new file, named by timestamp*.
+    """
+    Pulls a specified data feed, 'url', from MassDOT's website
+    and writes the contents to a new file, named by timestamp*.
 
-	Creates a directory 'feedname' to house the feed's data. Inside 'feedname', a new
-	directory is created each day and named by date to store updates to the feed.
+    Creates a directory 'feedname' to house the feed's data. Inside 'feedname', a new
+    directory is created each day and named by date to store updates to the feed.
 
-	* the timestap used to name each file is recorded after
-	the response is received; the update being written may
-	not be consistent with the filename 
-	"""
+    * the timestap used to name each file is recorded after
+    the response is received; the update being written may
+    not be consistent with the filename 
+    """
 
-	start = time.time()
+    start = time.time()
 
-	request = urllib2.Request(url)
-	data = urllib2.urlopen(request).read()
-	
-	resTime = (time.time()-start)
+    request = urllib2.Request(url)
+    data = urllib2.urlopen(request).read()
+    
+    resTime = (time.time()-start)
 
-	currentDay = time.strftime("%b-%d-%Y")
-	lastUpdated = (currentDay + time.strftime("_%H:%M:%S_%Z"))
-	path = os.getcwd()+'/data/'+feedname+'/'+currentDay
-	if not os.path.exists(path):
-  		os.makedirs(path)
-    # modification started
-    fh = open(path+'/'+"temp.xml",'w')
-    try:
-        fcntl.flock(fh, fcntl.LOCK_EX|fcntl.LOCK_NB)
-    except IOError:
-        warning.warn("The acquired lock is blocked")
-        fcntl.flock(fh, fcntl.LOCK_EX)
-    fh.write(data)
-    # previous line:
-	# open(path+'/'+lastUpdated+".xml",'w').write(data)
-    # do we need to add this line?
-    fh.close()    
+    currentDay = time.strftime("%b-%d-%Y")
+    lastUpdated = (currentDay + time.strftime("_%H:%M:%S_%Z"))
+    path = os.getcwd()+'/data/'+feedname+'/'+currentDay
+    if not os.path.exists(path):
+          os.makedirs(path)
+    open(path+'/'+lastUpdated+".xml",'w').write(data)
 
-	writeTime = (time.time()-start-resTime) 
+    writeTime = (time.time()-start-resTime) 
 
-	logging.info('Data Feed: '+feedname+' Date/Time: '+lastUpdated)
-	logging.info('Response Time: '+`resTime`+' Write Time: '+`writeTime`)
-	logging.info('=========')
+    logging.info('Data Feed: '+feedname+' Date/Time: '+lastUpdated)
+    logging.info('Response Time: '+`resTime`+' Write Time: '+`writeTime`)
+    logging.info('=========')
+
+fh = open(os.getcwd()+'/tmp/massDOT.lock')
+try:
+    fcntl.flock(fh, fcntl.LOCK_EX|fcntl.LOCK_NB)
+except IOError:
+    warning.warn("The acquired lock is blocked")
+    sys.exit(0)    
 
 if 'data' not in os.listdir(os.getcwd()):
-	os.mkdir(os.getcwd()+'/data')
+    os.mkdir(os.getcwd()+'/data')
 logging.basicConfig(filename=os.getcwd()+'/data/feedData.log',level=logging.INFO)
 config = ConfigParser.ConfigParser()
 config.read('feeds.ini')
 for feed in config.sections():
-	writeFeed(config.get(feed, 'url'), feed)
+    writeFeed(config.get(feed, 'url'), feed)
+
+fh.close()
