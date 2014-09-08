@@ -60,7 +60,8 @@ def writeFeed(url, feedname):
     logging.info('Response Time: '+`resTime`+' Write Time: '+`writeTime`)
     logging.info('=========')
 
-fh = open(os.getcwd()+'/tmp/massDOT.lock')
+fh = open(os.getcwd() + '/massDOT.lock', 'w')
+
 try:
     fcntl.flock(fh, fcntl.LOCK_EX|fcntl.LOCK_NB)
 except IOError:
