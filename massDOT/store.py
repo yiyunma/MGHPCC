@@ -65,7 +65,7 @@ fh = open(os.getcwd() + '/massDOT.lock', 'w')
 try:
     fcntl.flock(fh, fcntl.LOCK_EX|fcntl.LOCK_NB)
 except IOError:
-    warning.warn("The acquired lock is blocked")
+    logging.warn("The acquired lock is blocked")
     sys.exit(0)    
 
 if 'data' not in os.listdir(os.getcwd()):
