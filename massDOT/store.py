@@ -20,8 +20,8 @@ def sslwrap(func):
 
     @wraps(func)
     def bar(*args, **kw):
-            kw['ssl_version'] = ssl.PROTOCOL_TLSv1
-            return func(*args, **kw)
+        kw['ssl_version'] = ssl.PROTOCOL_TLSv1
+        return func(*args, **kw)
     return bar
 
 ssl.wrap_socket = sslwrap(ssl.wrap_socket)
@@ -51,7 +51,7 @@ def writeFeed(url, feedname):
     lastUpdated = (currentDay + time.strftime("_%H:%M:%S_%Z"))
     path = os.getcwd()+'/data/'+feedname+'/'+currentDay
     if not os.path.exists(path):
-          os.makedirs(path)
+        os.makedirs(path)
     open(path+'/'+lastUpdated+".xml",'w').write(data)
 
     writeTime = (time.time()-start-resTime) 
